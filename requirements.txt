@@ -1,0 +1,10 @@
+# Dependencies inferred from imports in Appendices B, D, and E.
+# Versions were not recorded in the original report.
+google-cloud-storage
+pandas
+python-chess
+matplotlib
+seaborn
+pyarrow
+pyspark
+scikit-learn

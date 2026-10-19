@@ -1,0 +1,2 @@
+# Command recorded in Appendix C of original report (not executed here)
+gcloud dataproc clusters create cluster-e006 --enable-component-gateway --region us-central1 --master-machine-type n4-standard-4 --master-boot-disk-type hyperdisk-balanced --master-boot-disk-size 100 --num-workers 2 --worker-machine-type n4-standard-2 --worker-boot-disk-size 500 --image-version 2.2-debian12 --optional-components JUPYTER --project victors-project-451221

@@ -1,0 +1,19 @@
+# Local Python artifacts
+__pycache__/
+*.py[cod]
+.venv/
+.ipynb_checkpoints/
+.DS_Store
+
+# Credentials and environment configuration
+.env
+*service-account*.json
+*credentials*.json
+
+# Raw/intermediate datasets and model artifacts
+*.pgn
+*.parquet
+*.zip
+*.joblib
+*.pkl
+models/
