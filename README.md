@@ -1,7 +1,5 @@
 # Lichess Blitz Chess Analytics and Outcome Prediction
 
-**CIS 9760 — Big Data Technologies | May 2025**
-
 ## Project overview
 
 This project explores historical blitz chess games from the [Lichess Blitz Subsample on Kaggle](https://www.kaggle.com/datasets/naddleman/lichess-blitz-subsample). Its goal is to examine factors associated with game outcomes and classify whether White won (`1`) or did not win (`0`). The project uses Google Cloud Platform for data storage and processing, Python for PGN parsing and exploratory data analysis, and PySpark MLlib for feature engineering and Random Forest classification.
@@ -91,7 +89,3 @@ lichess-chess-analytics/
 The scripts correspond to the original project's GCP setup, exploratory analysis, cleaning, training, and visualization stages. They retain original project-specific Cloud Storage paths and resource names; the preprocessing file also depends on an existing `df` DataFrame. **The repository is not supplied as a tested, one-command runnable deployment.** Review and adapt resource references and preprocessing inputs before attempting to run it. Creating GCP resources can incur charges.
 
 Raw PGN data and Spark model binaries are not included. The dataset is available from the [Kaggle source](https://www.kaggle.com/datasets/naddleman/lichess-blitz-subsample). Dependency versions were not specified in the project report, so `requirements.txt` lists relevant libraries without reproducing an exact historical environment.
-
-## Acknowledgments
-
-PGN parsing/EDA and feature engineering code drew on course-provided examples and instructional notebooks, as credited in the [May 2025 project report](docs/original_project_report.docx).
