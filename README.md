@@ -1,91 +1,116 @@
 # Lichess Blitz Chess Analytics and Outcome Prediction
 
-## Project overview
+## Project Overview
 
-This project explores historical blitz chess games from the [Lichess Blitz Subsample on Kaggle](https://www.kaggle.com/datasets/naddleman/lichess-blitz-subsample). Its goal is to examine factors associated with game outcomes and classify whether White won (`1`) or did not win (`0`). The project uses Google Cloud Platform for data storage and processing, Python for PGN parsing and exploratory data analysis, and PySpark MLlib for feature engineering and Random Forest classification.
+This project explores factors associated with the outcomes of online blitz chess games, with the goal of predicting whether the White player wins. It combines data acquisition, exploratory analysis, data cleaning, feature engineering, machine learning, and visualization using Google Cloud Platform, Python, and PySpark.
+
+**Author:** Victor Chen  
+**Course:** CIS 9760 — Big Data Technologies  
+**Date:** May 16, 2025
+
+## Dataset
+
+The project uses the [Lichess Blitz Subsample dataset on Kaggle](https://www.kaggle.com/datasets/naddleman/lichess-blitz-subsample).
+
+Games are stored in Portable Game Notation (PGN) format and include player ratings, game results, opening information, time controls, termination details, and moves.
+
+The prediction target is:
+
+- **1:** White wins.
+- **0:** White does not win, including Black wins and draws.
 
 ## Technologies
 
-- **Cloud:** Google Cloud Storage, Google Cloud Dataproc
-- **Data processing:** Python, pandas, `python-chess`, PySpark, Apache Spark
-- **Machine learning:** Spark MLlib (Random Forest, cross-validation)
+- **Cloud infrastructure:** Google Cloud Platform, Google Cloud Storage, Google Cloud Dataproc
+- **Data processing:** Python, pandas, python-chess, PySpark
+- **Machine learning:** Spark MLlib
 - **Visualization:** Matplotlib, Seaborn, scikit-learn
-- **Data formats:** PGN, Parquet
+- **Data formats:** PGN and Parquet
 
-## Project workflow
+## Project Workflow
 
-```text
-Kaggle Lichess PGN files
-         |
-         v
-Google Cloud Storage: landing/     Raw PGN input
-         |
-         v
-Python + pandas                    Parse chess games and perform EDA
-         |
-         v
-Data cleaning / Parquet
-         |
-         v
-Google Cloud Storage: cleaned/     Structured training input
-         |
-         v
-Dataproc + PySpark MLlib           Encode, assemble and scale features
-         |                         Train and tune Random Forest
-         +-----------------------> GCS trusted/  Engineered data
-         +-----------------------> GCS models/   Saved model and evaluation
-         |
-         v
-Visualizations                     Elo ratings, game outcomes,
-                                    confusion matrix, feature importance
-```
+### 1. Data Acquisition
 
-### Data preparation and exploratory analysis
+The dataset was downloaded from Kaggle into a Google Cloud virtual machine, extracted, and copied into the landing folder of a Cloud Storage bucket.
 
-PGN files contain game metadata, including player Elo ratings, opening names, game results, time controls, and termination details. Python and `python-chess` are used to parse the games into tabular records. pandas is used for exploratory summaries, cleaning, and preparation of structured data.
+The bucket was organized into five folders:
 
-### Feature engineering and model training
+| Folder | Purpose |
+| --- | --- |
+| `landing/` | Raw PGN files |
+| `cleaned/` | Cleaned data |
+| `trusted/` | Data with engineered features |
+| `code/` | Project code |
+| `models/` | Saved models and evaluation results |
 
-The Spark pipeline uses the following features:
+### 2. Exploratory Data Analysis and Cleaning
 
-| Feature type | Fields | Transformation |
+Python’s chess library and pandas were used to parse PGN files into structured game records. Exploratory analysis examined numeric summaries, missing values, categorical distributions, player ratings, game outcomes, and common openings.
+
+The cleaning code standardized column names, removed rows with missing values, converted data types, and prepared the data for Parquet storage.
+
+The following columns were selected for removal:
+
+- `White`
+- `Black`
+- `UTCDate`
+- `UTCTime`
+
+These fields contain player usernames and timestamps that were not needed for the selected modeling approach. The report documents difficulties saving the cleaned data to Parquet during this milestone.
+
+### 3. Feature Engineering
+
+PySpark code processed the data using a Dataproc cluster.
+
+| Feature Type | Columns | Processing |
 | --- | --- | --- |
-| Numeric | `whiteelo`, `blackelo`, `nummoves` | Vector assembly and standard scaling |
+| Numeric | `whiteelo`, `blackelo`, `nummoves` | Included in the feature vector and standardized |
 | Categorical | `eco`, `opening`, `timecontrol`, `termination` | StringIndexer and OneHotEncoder |
-| Label | Game result | `1` for White win, `0` otherwise |
 
-A Random Forest classifier is fitted using an 80/20 training/test split (`seed=42`), with three-fold cross-validation over 20/50 trees and depths of 5/10.
+VectorAssembler combined the encoded categorical features and numeric columns into a single vector. StandardScaler then produced the model’s feature vector.
 
-> **Model interpretation:** Because `nummoves` and `termination` are known after a game ends, this model is best interpreted as retrospective outcome classification rather than a pregame forecasting model.
+### 4. Model Training
 
-## Results
+A Random Forest classifier was trained to distinguish White wins from other outcomes.
 
-The May 2025 project report gives an accuracy of **57.58%** for the classifier. The confusion matrix shown in the same report contains 190 and 185 correct predictions and 37 and 50 incorrect predictions, equivalent to approximately **81.17%** accuracy for the cases in that chart. These figures are not directly consistent; the report does not establish that the metric and chart use the same evaluation sample. They are presented here as documented, without claiming a newly verified benchmark.
+The modeling configuration included:
 
-The project also includes visualizations of Elo rating distributions, game outcomes, Elo difference by outcome, confusion matrix, and numeric feature importance. See the [original project report](docs/original_project_report.docx) for charts, explanations, and milestone details.
+- **Training/test split:** 80% training and 20% testing
+- **Random seed:** 42
+- **Cross-validation:** Three folds
+- **Number of trees tested:** 20 and 50
+- **Maximum depths tested:** 5 and 10
+- **Evaluation metric:** Accuracy
 
-## Repository structure
+The modeling code saved transformed data to the `trusted/` folder and the trained model and evaluation results to the `models/` folder.
 
-```text
-lichess-chess-analytics/
-├── README.md
-├── requirements.txt
-├── .gitignore
-├── scripts/
-│   ├── setup_gcp.sh
-│   └── create_dataproc_cluster.sh
-├── src/
-│   ├── eda.py
-│   ├── preprocess.py
-│   ├── train.py
-│   └── visualize.py
-└── docs/
-    ├── original_project_report.docx
-    └── report_embedded_images/
-```
+## Results and Visualizations
 
-## Code and setup notes
+The report states a classification accuracy of **57.58%**, summarized as approximately **57.6%** in its conclusion.
 
-The scripts correspond to the original project's GCP setup, exploratory analysis, cleaning, training, and visualization stages. They retain original project-specific Cloud Storage paths and resource names; the preprocessing file also depends on an existing `df` DataFrame. **The repository is not supplied as a tested, one-command runnable deployment.** Review and adapt resource references and preprocessing inputs before attempting to run it. Creating GCP resources can incur charges.
+The visualizations examined:
 
-Raw PGN data and Spark model binaries are not included. The dataset is available from the [Kaggle source](https://www.kaggle.com/datasets/naddleman/lichess-blitz-subsample). Dependency versions were not specified in the project report, so `requirements.txt` lists relevant libraries without reproducing an exact historical environment.
+- **Player Elo distributions:** White and Black ratings followed similar distributions, with White players slightly higher rated on average.
+- **Game outcomes:** The dataset showed a near-even split between White wins and other outcomes.
+- **Elo difference by outcome:** White wins generally corresponded to a greater rating advantage for White.
+- **Confusion matrix:** The chart displayed correct predictions and misclassifications for both outcome classes.
+- **Numeric feature importance:** BlackElo ranked highest, followed by WhiteElo and the number of moves.
+
+## Future Improvements
+
+The report identifies several opportunities for further exploration:
+
+- Incorporating move-level data
+- Analyzing time usage patterns
+- Experimenting with deeper models
+- Adding player behavior metrics
+
+## Acknowledgments
+
+PGN parsing and exploratory analysis were adapted from the sample notebooks `python_eda_functions_20250331` and `Amazon_Reviews_EDA_Python_20250331`, along with chess PGN code shared by Professor Holowczak.
+
+Feature engineering and modeling were adapted from the sample notebook `Amazon_Reviews_Feature_Engineering_20250506`, also shared by Professor Holowczak.
+
+## Project Report
+
+[Read the full project report](docs/original_project_report.pdf)
